@@ -1,0 +1,37 @@
+version: '3.7'
+services:
+  php:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    volumes:
+      - ~/.composer-docker/cache:/root/.composer/cache:delegated
+      - ./vendor:/var/www/app/vendor:cached
+      - ./:/var/www/app:delegated
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ~/.composer-docker/cache:/root/.composer/cache:delegated
+      - ./vendor:/var/www/app/vendor:cached
+      - ./:/var/www/app:delegated
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx/logs:/var/log/nginx/
+    ports:
+      - '81:80'
+    links:
+      - php
+  db:
+    image: mysql:${MYSQL_VERSION}
+    container_name: ${MYSQL_HOST}
+    restart: always
+    env_file:
+      - ".env"
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    ports:
+      - "8989:3306"
+    volumes:
+      - "./db:/var/lib/mysql"
